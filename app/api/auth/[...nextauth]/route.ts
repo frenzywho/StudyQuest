@@ -5,8 +5,8 @@ import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import clientPromise from "@/lib/mongodb-client";
 import { compare } from "bcrypt";
-
-export const authOptions: NextAuthOptions = {
+import { authOptions as importedAuthOptions } from "@/lib/auth"; // ✅ Correct import
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -94,4 +94,4 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };
