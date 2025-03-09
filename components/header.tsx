@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/contexts/auth-context"
 import { ModeToggle } from "@/components/mode-toggle"
 import {
   NavigationMenu,
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { signOut } from "next-auth/react"
 
 export function Header() {
   const { user, logout } = useAuth()
@@ -31,7 +32,31 @@ export function Header() {
 
   const xpNeeded = 500 // XP needed for next level
 
-  if (!user) return null
+  const handleSignOut = async () => {
+    try {
+      // Use the built-in signOut function from next-auth
+      await signOut({ 
+        redirect: true,
+        callbackUrl: '/signin' // Redirect to signin page after signout
+      });
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Fallback if the signout fails - redirect manually
+      window.location.href = '/signin';
+    }
+  };
+
+  // Use a conditional approach to avoid errors when user is null
+  if (!user) {
+    return (
+      <header className="border-b">
+        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+          <div className="font-bold">StudyQuest</div>
+          <div>Loading...</div>
+        </div>
+      </header>
+    )
+  }
 
   return (
     <header className="border-b">
@@ -122,7 +147,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => logout()}>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleSignOut()}>
                 <LucideLogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>

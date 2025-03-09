@@ -6,13 +6,23 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/components/auth-provider"
 import { Header } from "@/components/header"
+import { validateEnv } from '@/lib/env';
+import ErrorBoundary from "@/components/error-boundary";
+import { Providers } from "./providers";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Validate environment variables at app startup
+if (typeof window === 'undefined') {
+  validateEnv();
+}
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "StudyQuest - Gamified Learning Platform",
-  description: "Level up your learning with StudyQuest",
-    generator: 'v0.dev'
+  description: "Learn through gamification and AI-powered assistance",
+  generator: 'Akatsuki'
 }
 
 export default function RootLayout({
@@ -25,18 +35,30 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <div className="min-h-screen bg-background">
-              <Header />
-              <main>{children}</main>
-              <Toaster />
-            </div>
+            <Providers>
+              <ErrorBoundary>
+                <div className="min-h-screen bg-background">
+                  <Header />
+                  <main>{children}</main>
+                  <Toaster />
+                </div>
+              </ErrorBoundary>
+              <ToastContainer 
+                position="bottom-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+              />
+            </Providers>
           </ThemeProvider>
         </AuthProvider>
       </body>
     </html>
   )
 }
-
-
-
-import './globals.css'

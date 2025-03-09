@@ -1,334 +1,199 @@
 "use client"
-import { useAuth } from "@/components/auth-provider"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Medal, Trophy, Star, Clock } from "lucide-react"
 
-// User interface for leaderboard
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Medal, Trophy, Star, AlertCircle } from "lucide-react";
+
 interface LeaderboardUser {
-  id: string
-  name: string
-  avatarUrl: string
-  level: number
-  xp: number
-  position: number
-  isCurrentUser: boolean
-  streak?: number
-  tasksCompleted?: number
-  quizScore?: number
+  rank: number;
+  id: string;
+  name: string;
+  email: string;
+  level: number;
+  xp: number;
+  avatarUrl: string;
+  joinedDate: string;
 }
-
-// Mock leaderboard data
-const mockWeeklyData: LeaderboardUser[] = [
-  {
-    id: "user-1",
-    name: "Alex Student",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    xp: 350,
-    position: 3,
-    isCurrentUser: true,
-  },
-  {
-    id: "user-2",
-    name: "Emma Johnson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 7,
-    xp: 570,
-    position: 1,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-3",
-    name: "Michael Chen",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 6,
-    xp: 430,
-    position: 2,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-4",
-    name: "Olivia Davis",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 4,
-    xp: 290,
-    position: 4,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-5",
-    name: "James Wilson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 4,
-    xp: 260,
-    position: 5,
-    isCurrentUser: false,
-  },
-]
-
-const mockStreakData: LeaderboardUser[] = [
-  {
-    id: "user-1",
-    name: "Alex Student",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    streak: 5,
-    position: 4,
-    isCurrentUser: true,
-  },
-  {
-    id: "user-2",
-    name: "Emma Johnson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 7,
-    streak: 12,
-    position: 1,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-3",
-    name: "Michael Chen",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 6,
-    streak: 9,
-    position: 2,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-6",
-    name: "Sophia Martinez",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    streak: 8,
-    position: 3,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-7",
-    name: "Daniel Brown",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 4,
-    streak: 4,
-    position: 5,
-    isCurrentUser: false,
-  },
-]
-
-const mockTasksData: LeaderboardUser[] = [
-  {
-    id: "user-1",
-    name: "Alex Student",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    tasksCompleted: 14,
-    position: 2,
-    isCurrentUser: true,
-  },
-  {
-    id: "user-8",
-    name: "Isabella Taylor",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 6,
-    tasksCompleted: 17,
-    position: 1,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-3",
-    name: "Michael Chen",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 6,
-    tasksCompleted: 12,
-    position: 3,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-9",
-    name: "Ethan Anderson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    tasksCompleted: 11,
-    position: 4,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-5",
-    name: "James Wilson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 4,
-    tasksCompleted: 9,
-    position: 5,
-    isCurrentUser: false,
-  },
-]
-
-const mockQuizData: LeaderboardUser[] = [
-  {
-    id: "user-1",
-    name: "Alex Student",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 5,
-    quizScore: 84,
-    position: 3,
-    isCurrentUser: true,
-  },
-  {
-    id: "user-2",
-    name: "Emma Johnson",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 7,
-    quizScore: 92,
-    position: 1,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-10",
-    name: "Ava Thomas",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 6,
-    quizScore: 88,
-    position: 2,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-4",
-    name: "Olivia Davis",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 4,
-    quizScore: 79,
-    position: 4,
-    isCurrentUser: false,
-  },
-  {
-    id: "user-11",
-    name: "Noah Williams",
-    avatarUrl: "/placeholder.svg?height=40&width=40",
-    level: 3,
-    quizScore: 75,
-    position: 5,
-    isCurrentUser: false,
-  },
-]
 
 export function Leaderboard() {
-  const { user } = useAuth()
+  const { data: session } = useSession();
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userRank, setUserRank] = useState<number | null>(null);
 
-  return (
-    <Tabs defaultValue="weekly" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="weekly">
-          <Trophy className="h-4 w-4 mr-2" />
-          XP
-        </TabsTrigger>
-        <TabsTrigger value="streaks">
-          <Clock className="h-4 w-4 mr-2" />
-          Streaks
-        </TabsTrigger>
-        <TabsTrigger value="tasks">
-          <Star className="h-4 w-4 mr-2" />
-          Tasks
-        </TabsTrigger>
-        <TabsTrigger value="quizzes">
-          <Medal className="h-4 w-4 mr-2" />
-          Quizzes
-        </TabsTrigger>
-      </TabsList>
+  // Function to fetch leaderboard data
+  const fetchLeaderboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/leaderboard');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard data');
+      }
+      
+      const data = await response.json();
+      setUsers(data);
+      
+      // Find the current user's rank
+      if (session?.user?.id) {
+        const currentUserRank = data.findIndex(
+          (user: LeaderboardUser) => user.id === session.user.id
+        );
+        
+        if (currentUserRank !== -1) {
+          setUserRank(currentUserRank + 1);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching leaderboard:', err);
+      setError('Failed to load leaderboard');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <TabsContent value="weekly">
-        <LeaderboardTable users={mockWeeklyData} type="xp" />
-      </TabsContent>
+  // Fetch leaderboard on mount and when session changes
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [session]);
 
-      <TabsContent value="streaks">
-        <LeaderboardTable users={mockStreakData} type="streaks" />
-      </TabsContent>
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Trophy className="h-5 w-5 text-yellow-500" />;
+      case 2:
+        return <Medal className="h-5 w-5 text-gray-400" />;
+      case 3:
+        return <Medal className="h-5 w-5 text-amber-700" />;
+      default:
+        return <span className="text-muted-foreground font-medium">{rank}</span>;
+    }
+  };
 
-      <TabsContent value="tasks">
-        <LeaderboardTable users={mockTasksData} type="tasks" />
-      </TabsContent>
-
-      <TabsContent value="quizzes">
-        <LeaderboardTable users={mockQuizData} type="quizzes" />
-      </TabsContent>
-    </Tabs>
-  )
-}
-
-function LeaderboardTable({
-  users,
-  type,
-}: {
-  users: LeaderboardUser[]
-  type: "xp" | "streaks" | "tasks" | "quizzes"
-}) {
-  const valueLabels = {
-    xp: "XP Earned",
-    streaks: "Current Streak",
-    tasks: "Tasks Completed",
-    quizzes: "Quiz Accuracy",
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+        <h3 className="font-semibold text-lg">Failed to load leaderboard</h3>
+        <p className="text-muted-foreground mt-1">{error}</p>
+        <button 
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          onClick={fetchLeaderboard}
+        >
+          Try Again
+        </button>
+      </div>
+    );
   }
 
-  const valueFormatters = {
-    xp: (user: LeaderboardUser) => `${user.xp} XP`,
-    streaks: (user: LeaderboardUser) => `${user.streak} days`,
-    tasks: (user: LeaderboardUser) => `${user.tasksCompleted}`,
-    quizzes: (user: LeaderboardUser) => `${user.quizScore}%`,
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-12">Rank</TableHead>
-          <TableHead>Student</TableHead>
-          <TableHead>Level</TableHead>
-          <TableHead className="text-right">{valueLabels[type]}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.id} className={user.isCurrentUser ? "bg-muted" : ""}>
-            <TableCell>
-              {user.position <= 3 ? (
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                  {user.position === 1 ? (
-                    <Trophy className="h-4 w-4 text-amber-400" />
-                  ) : user.position === 2 ? (
-                    <Medal className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Medal className="h-4 w-4 text-amber-700" />
-                  )}
-                </div>
-              ) : (
-                <div className="pl-3">{user.position}</div>
-              )}
-            </TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatarUrl} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="font-medium text-sm">
-                    {user.name}
-                    {user.isCurrentUser && <span className="ml-2 text-xs text-muted-foreground">(You)</span>}
-                  </span>
-                </div>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline" className="font-bold">
-                {user.level}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right font-medium">{valueFormatters[type](user)}</TableCell>
-          </TableRow>
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        {[...Array(7)].map((_, i) => (
+          <div key={i} className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-6 w-16 ml-auto" />
+          </div>
         ))}
-      </TableBody>
-    </Table>
-  )
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold tracking-tight">Leaderboard</h2>
+        {userRank && (
+          <Badge variant="outline" className="self-start sm:self-auto">
+            Your rank: {userRank}
+          </Badge>
+        )}
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">Rank</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Level</TableHead>
+              <TableHead className="text-right">XP</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => {
+              const isCurrentUser = user.id === session?.user?.id;
+              return (
+                <TableRow 
+                  key={user.id} 
+                  className={isCurrentUser ? "bg-muted/50" : undefined}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center justify-center">
+                      {getRankIcon(user.rank)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                        <AvatarFallback>
+                          {user.name?.substring(0, 2).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {user.name}
+                          {isCurrentUser && (
+                            <span className="ml-2 text-xs text-muted-foreground">(You)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span>{user.level}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {user.xp.toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex justify-end">
+        <button 
+          className="text-sm text-muted-foreground hover:text-foreground"
+          onClick={fetchLeaderboard}
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
+  );
 }
 
